@@ -531,33 +531,44 @@ export default function OrdinaPage() {
 
   // ✅ CONTROLLO STAMPANTE LOCALE
 // ✅ CONTROLLO STAMPANTE LOCALE - VERSIONE DEBUG
+// ✅ CONTROLLO SEMPLIFICATO
 useEffect(() => {
+  let mounted = true;
+  
   const checkStampante = async () => {
+    if (!mounted) return;
+    
     try {
-      console.log('🔍 Controllo stampante in corso...');
-      const response = await fetch('http://172.20.10.2:3002/api/health');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       
-      console.log('📡 Status response:', response.status);
-      console.log('✅ Response ok:', response.ok);
+      const response = await fetch('http://172.20.10.2:3002/api/health', {
+        signal: controller.signal
+      });
       
-      if (response.ok) {
-        setStampanteOnline(true);
-        console.log('🎉 Stampante impostata come ONLINE');
-      } else {
-        setStampanteOnline(false);
-        console.log('❌ Stampante impostata come OFFLINE - Status non ok');
+      clearTimeout(timeoutId);
+      
+      if (mounted) {
+        setStampanteOnline(response.ok);
       }
     } catch (error) {
-      setStampanteOnline(false);
-      console.log('💥 Errore connessione stampante:', error.message);
+      if (mounted) {
+        setStampanteOnline(false);
+      }
     }
   };
 
+  // Primo controllo immediato
   checkStampante();
+  
+  // Poi ogni 5 secondi
   const interval = setInterval(checkStampante, 5000);
-  return () => clearInterval(interval);
+  
+  return () => {
+    mounted = false;
+    clearInterval(interval);
+  };
 }, []);
-
   // ✅ FUNZIONE STAMPA LOCALE
   const stampaLocale = async (ordineData) => {
     try {
