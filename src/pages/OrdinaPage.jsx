@@ -530,39 +530,40 @@ export default function OrdinaPage() {
   }, [mostraCopertoModal]);
 
   // ✅ CONTROLLO STAMPANTE LOCALE
-  useEffect(() => {
-    const checkStampante = async () => {
-      try {
-        const response = await fetch('http://127.0.0.2:3002/api/health');  // CAMBIARE IP WIFI
-        setStampanteOnline(response.ok);
-      } catch {
-        setStampanteOnline(false);
-      }
-    };
-
-    checkStampante();
-    const interval = setInterval(checkStampante, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // ✅ FUNZIONE STAMPA LOCALE
-  const stampaLocale = async (ordineData) => {
+  // ✅ CONTROLLO STAMPANTE LOCALE
+useEffect(() => {
+  const checkStampante = async () => {
     try {
-      const response = await fetch('http://127.0.0.2:3002/api/stampa-ordine', { // CAMBIARE IP WIFI
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ordine: ordineData })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Errore stampa locale');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      throw new Error('Servizio stampa non disponibile');
+      const response = await fetch('http://172.20.10.2:3002/api/health'); // ← IP invece di localhost
+      setStampanteOnline(response.ok);
+    } catch {
+      setStampanteOnline(false);
     }
   };
+
+  checkStampante();
+  const interval = setInterval(checkStampante, 10000);
+  return () => clearInterval(interval);
+}, []);
+
+// ✅ FUNZIONE STAMPA LOCALE
+const stampaLocale = async (ordineData) => {
+  try {
+    const response = await fetch('http://172.20.10.2:3002/stampa-ordine', { // ← IP invece di localhost
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ordine: ordineData })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Errore stampa locale');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    throw new Error('Servizio stampa non disponibile');
+  }
+};
 
   // ✅ PRIMA CARICA TUTTI I DATI INIZIALI
   useEffect(() => {
