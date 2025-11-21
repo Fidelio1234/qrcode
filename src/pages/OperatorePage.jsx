@@ -169,15 +169,7 @@ const stampaTotaleTavolo = useCallback(async () => {
 }, [tavoloCorrente]);
 
 
-
-
-
-
-
-
-
-
-  // ✅ USE EFFECT CORRETTO
+// ✅ USE EFFECT CORRETTO
   useEffect(() => {
     if (isAreaOperatore) {
       caricaOrdiniCompleti();
