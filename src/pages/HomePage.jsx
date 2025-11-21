@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import './HomePage.css';

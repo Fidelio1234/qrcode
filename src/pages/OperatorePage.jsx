@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import './OperatorePage.css';
@@ -22,8 +20,17 @@ export default function OperatorePage() {
   const isAreaOperatore = !tavoloCorrente;
   const isChiusuraTavolo = !!tavoloCorrente;
 
+
+
+
+
+
+
+
+
+
   // ✅ USE CALLBACK PER LE FUNZIONI
-  const caricaOrdini = useCallback(() => {
+  /*const caricaOrdini = useCallback(() => {
     fetch('https://qrcode-finale.onrender.com/api/ordini')
       .then(res => {
         if (!res.ok) throw new Error('Error loading orders');
@@ -62,6 +69,68 @@ export default function OperatorePage() {
         setOrdini([]);
       });
   }, []);
+
+*/
+
+
+
+
+
+
+
+
+const caricaOrdini = useCallback(() => {
+  console.log('🔍 DEBUG: Chiamando /api/ordini per tavolo:', tavoloCorrente);
+  
+  fetch('https://qrcode-finale.onrender.com/api/ordini')
+    .then(res => {
+      if (!res.ok) throw new Error('Error loading orders');
+      return res.json();
+    })
+    .then(data => {
+      console.log('📋 Ordini ATTIVI ricevuti:', data.map(o => ({ id: o.id, stato: o.stato, tavolo: o.tavolo })));
+      setOrdini(data);
+    })
+    .catch(err => {
+      console.error('❌ Error loading orders:', err);
+      setOrdini([]);
+    });
+}, [tavoloCorrente]); // ⬅️ AGGIUNGI tavoloCorrente QUI
+
+const caricaOrdiniCompleti = useCallback(() => {
+  console.log('🔍 DEBUG: Chiamando /api/ordini/completo');
+  
+  fetch('https://qrcode-finale.onrender.com/api/ordini/completo')
+    .then(res => {
+      if (!res.ok) throw new Error('Error loading complete orders');
+      return res.json();
+    })
+    .then(data => {
+      console.log('📋 Ordini COMPLETI ricevuti:', data.length);
+      
+      const ordiniOrdinati = data.sort((a, b) => {
+        const dataA = new Date(a.timestamp || a.chiusoIl || a.dataOra);
+        const dataB = new Date(b.timestamp || b.chiusoIl || b.dataOra);
+        return dataB - dataA;
+      });
+      
+      setOrdini(ordiniOrdinati);
+    })
+    .catch(err => {
+      console.error('❌ Error loading complete orders:', err);
+      setOrdini([]);
+    });
+}, []); // ⬅️ Qui non serve tavoloCorrente
+
+
+
+
+
+
+
+
+
+
 
   const evadiOrdine = useCallback((id) => {
     fetch(`https://qrcode-finale.onrender.com/api/ordini/${id}/evaso`, { 
@@ -170,7 +239,7 @@ const stampaTotaleTavolo = useCallback(async () => {
 
 
 // ✅ USE EFFECT CORRETTO
-  useEffect(() => {
+  /*useEffect(() => {
     if (isAreaOperatore) {
       caricaOrdiniCompleti();
     } else {
@@ -183,10 +252,42 @@ const stampaTotaleTavolo = useCallback(async () => {
       } else {
         caricaOrdini();
       }
-    }, 3000);
+    }, 10000);
     
     return () => clearInterval(interval);
   }, [isAreaOperatore, caricaOrdini, caricaOrdiniCompleti]);
+
+*/
+
+
+
+
+// ✅ USE EFFECT CORRETTO - FIX AUTO-EVASIONE
+useEffect(() => {
+  console.log('🔄 Caricamento ordini - Modalità:', isAreaOperatore ? 'Operatore' : 'Tavolo ' + tavoloCorrente);
+  
+  if (isAreaOperatore) {
+    caricaOrdiniCompleti();
+    
+    // ✅ SOLO AREA OPERATORE: refresh ogni 10 secondi
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refresh area operatore');
+      caricaOrdiniCompleti();
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  } else {
+    // ✅ TAVOLO SPECIFICO: carica SOLO UNA VOLTA
+    console.log('📋 Caricamento una tantum per tavolo:', tavoloCorrente);
+    caricaOrdini();
+    
+    // ❌ NESSUN INTERVAL PER TAVOLI SPECIFICI
+    return () => {}; // Cleanup vuoto
+  }
+}, [isAreaOperatore, tavoloCorrente, caricaOrdini, caricaOrdiniCompleti]);
+
+
+
 
   useEffect(() => {
     if (messaggioSuccesso) {
@@ -308,12 +409,7 @@ const stampaTotaleTavolo = useCallback(async () => {
 
       {isAreaOperatore && (
         <div className="filtri-stato">
-          <button 
-            className={`filtro-btn ${filtroStato === 'tutti' ? 'attivo' : ''}`}
-            onClick={() => setFiltroStato('tutti')}
-          >
-            Tutti
-          </button>
+       
           <button 
             className={`filtro-btn ${filtroStato === 'in_attesa' ? 'attivo' : ''}`}
             onClick={() => setFiltroStato('in_attesa')}
@@ -397,7 +493,7 @@ const stampaTotaleTavolo = useCallback(async () => {
                           <span className="ordine-stato" style={{ color: getStatoColore(o.stato) }}>
                             {getStatoTesto(o.stato)}
                           </span>
-                          {o.dataOra && <span className="ordine-data">• {o.dataOra}</span>}
+                          {o.dataOra && <span className="ordine-data">• Aperto {o.dataOra}</span>}
                           {o.chiusoIl && <span className="ordine-data">• Chiuso: {o.chiusoIl}</span>}
                         </div>
                       </div>

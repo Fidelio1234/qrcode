@@ -1,7 +1,7 @@
 /* 🏠 HOME PAGE - CLEAN DESIGN CON WiFi */
 .home-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #babcc5 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f0f10 0%, #764ba2 100%);
   padding: 30px 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
